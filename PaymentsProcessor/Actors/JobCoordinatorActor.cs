@@ -17,12 +17,7 @@ namespace PaymentsProcessor.Actors
         private int _numberOfRemainingPayments;
         public JobCoordinatorActor()
         {
-            _paymentWorker = Context.ActorOf(
-                Props.Empty.WithRouter(new RoundRobinGroup(
-                    "/user/PaymentWorker1",
-                    "/user/PaymentWorker2",
-                    "/user/PaymentWorker3"
-                    )));
+            _paymentWorker = Context.ActorOf(Context.DI().Props<PaymentWorkerActor>(),"PaymentWorkers");              
                 
 
             Receive<ProcessFileMessage>(

@@ -22,7 +22,7 @@ namespace PaymentsProcessor.Actors
 
         private void SendPayment(SendPaymentMessage message)
         {
-            Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.LastName);
+            Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.AccountNumber);
 
             _paymentGateway.Pay(message.AccountNumber, message.Amount);
 

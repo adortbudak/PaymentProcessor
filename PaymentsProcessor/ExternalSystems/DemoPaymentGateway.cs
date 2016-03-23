@@ -11,7 +11,17 @@ namespace PaymentsProcessor.ExternalSystems
     {
         public void Pay(int accountNumber,decimal amount)
         {
-            Thread.Sleep(200);
+            if (PeakTimeDemoSimulator.IsPeakHours && amount > 100)
+            {
+                Console.WriteLine(
+                    "Account number {0} payment takes longer because is peak & > 100", accountNumber);
+                Thread.Sleep(2000);
+            }
+            else
+            {
+                Thread.Sleep(200);
+            }
+            
         }
     }
 }
