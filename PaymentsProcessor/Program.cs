@@ -22,13 +22,13 @@ namespace PaymentsProcessor
 
             IActorRef jobCoordinator = ActorSystem.ActorOf<JobCoordinatorActor>("JobCoordinator");
 
-            PeakTimeDemoSimulator.StartDemo(stayPeakTimeForSeconds: 10);
+            PeakTimeDemoSimulator.StartDemo(stayPeakTimeForSeconds: 2);
 
            
 
             var jobTime = Stopwatch.StartNew();
 
-            jobCoordinator.Tell(new ProcessFileMessage("mock_data4.csv"));
+            jobCoordinator.Tell(new ProcessFileMessage("mock_data5.txt"));
 
             ActorSystem.AwaitTermination();
 

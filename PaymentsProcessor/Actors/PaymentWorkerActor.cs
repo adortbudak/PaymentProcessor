@@ -9,24 +9,70 @@ using System.Threading.Tasks;
 
 namespace PaymentsProcessor.Actors
 {
-    internal class PaymentWorkerActor : ReceiveActor
+    internal class PaymentWorkerActor : ReceiveActor, IWithUnboundedStash
     {
         private readonly IPaymentGateway _paymentGateway;
+        public IStash Stash
+        {
+            get; set;
+        }
+
+        private ICancelable _unstashSchedule;
 
         public PaymentWorkerActor(IPaymentGateway paymentGateway)
         {
             _paymentGateway = paymentGateway;
 
-            Receive<SendPaymentMessage>(message => SendPayment(message));
+            Receive<SendPaymentMessage>(message => HandleSendPayment(message));
+
+            Receive<ProcessStashedPaymentsMessage>(message => HandleUnstashed());
+
+            
         }
 
-        private void SendPayment(SendPaymentMessage message)
+        private void HandleUnstashed()
         {
-            Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.AccountNumber);
+            if (!PeakTimeDemoSimulator.IsPeakHours)
+            {
+                Console.WriteLine("Not in peak hours so unstashing");
+                Stash.UnstashAll();
+            }
+        }       
 
-            _paymentGateway.Pay(message.AccountNumber, message.Amount);
+        
 
-            Sender.Tell(new PaymentSentMessage(message.AccountNumber));
+        private void HandleSendPayment(SendPaymentMessage message)
+        {
+           
+
+            if (message.Amount > 100 && PeakTimeDemoSimulator.IsPeakHours)
+            {
+                Console.WriteLine("Stashing payment for {0} {1}", message.FirstName, message.AccountNumber);
+                Stash.Stash();
+            }
+            else
+            {
+                Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.AccountNumber);
+                _paymentGateway.Pay(message.AccountNumber, message.Amount);
+
+                Sender.Tell(new PaymentSentMessage(message.AccountNumber));
+            }
+            
+        }
+
+        protected override void PreStart()
+        {
+            _unstashSchedule = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(1),
+                Self,
+                new ProcessStashedPaymentsMessage(),
+                Self);
+        }
+
+        protected override void PostStop()
+        {
+            _unstashSchedule.Cancel();
         }
     }
 }
