@@ -9,9 +9,13 @@ namespace PaymentsProcessor.Messages
     class PaymentSentMessage
     {
         public int AccountNumber { get; private set; }
-        public PaymentSentMessage(int accountNumber)
+
+        public string PaymentConfirmationReceipt { get; private set; }
+        public PaymentSentMessage(int accountNumber,string paymentConfirmationReceipt)
         {
             AccountNumber = accountNumber;
+            PaymentConfirmationReceipt = paymentConfirmationReceipt;
+
         }
     }
 }

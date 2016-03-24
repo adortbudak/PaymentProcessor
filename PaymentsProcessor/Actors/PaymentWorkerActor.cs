@@ -2,22 +2,15 @@
 using PaymentsProcessor.ExternalSystems;
 using PaymentsProcessor.Messages;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PaymentsProcessor.Actors
 {
-    internal class PaymentWorkerActor : ReceiveActor, IWithUnboundedStash
+    internal class PaymentWorkerActor : ReceiveActor
     {
         private readonly IPaymentGateway _paymentGateway;
-        public IStash Stash
-        {
-            get; set;
-        }
-
-        private ICancelable _unstashSchedule;
+        
+              
 
         public PaymentWorkerActor(IPaymentGateway paymentGateway)
         {
@@ -25,54 +18,25 @@ namespace PaymentsProcessor.Actors
 
             Receive<SendPaymentMessage>(message => HandleSendPayment(message));
 
-            Receive<ProcessStashedPaymentsMessage>(message => HandleUnstashed());
-
-            
+            Receive<PaymentReceipt>(message => HandlePaymentReceipt(message));              
         }
 
-        private void HandleUnstashed()
+        private void HandlePaymentReceipt(PaymentReceipt message)
         {
-            if (!PeakTimeDemoSimulator.IsPeakHours)
-            {
-                Console.WriteLine("Not in peak hours so unstashing");
-                Stash.UnstashAll();
-            }
-        }       
-
-        
+            Sender.Tell(new PaymentSentMessage(message.AccountNumber, message.PaymentConfirmationReceipt));
+        }
 
         private void HandleSendPayment(SendPaymentMessage message)
         {
-           
 
-            if (message.Amount > 100 && PeakTimeDemoSimulator.IsPeakHours)
-            {
-                Console.WriteLine("Stashing payment for {0} {1}", message.FirstName, message.AccountNumber);
-                Stash.Stash();
-            }
-            else
-            {
-                Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.AccountNumber);
-                _paymentGateway.Pay(message.AccountNumber, message.Amount);
+            Console.WriteLine("Sending payment for {0} {1}", message.FirstName, message.AccountNumber);
 
-                Sender.Tell(new PaymentSentMessage(message.AccountNumber));
-            }
+            _paymentGateway.Pay(message.AccountNumber, message.Amount).PipeTo(Self,Sender);
+                
+        }
             
-        }
+        
 
-        protected override void PreStart()
-        {
-            _unstashSchedule = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(
-                TimeSpan.FromSeconds(1),
-                TimeSpan.FromSeconds(1),
-                Self,
-                new ProcessStashedPaymentsMessage(),
-                Self);
-        }
-
-        protected override void PostStop()
-        {
-            _unstashSchedule.Cancel();
-        }
+        
     }
 }

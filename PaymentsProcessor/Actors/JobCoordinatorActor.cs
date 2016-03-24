@@ -29,6 +29,7 @@ namespace PaymentsProcessor.Actors
             Receive<PaymentSentMessage>(
                 message =>
                 {
+                    Console.WriteLine("Receipt {0} for account {1}", message.PaymentConfirmationReceipt, message.AccountNumber);
                     _numberOfRemainingPayments--;
                     var jobIsComplete = _numberOfRemainingPayments == 0;
                     if (jobIsComplete)

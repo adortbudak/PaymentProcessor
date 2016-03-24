@@ -1,26 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace PaymentsProcessor.ExternalSystems
 {
     class DemoPaymentGateway : IPaymentGateway
     {
-        public void Pay(int accountNumber,decimal amount)
+        public async Task<PaymentReceipt> Pay(int accountNumber,decimal amount)
         {
-            if (PeakTimeDemoSimulator.IsPeakHours && amount > 100)
-            {
-                Console.WriteLine(
-                    "Account number {0} payment takes longer because is peak & > 100", accountNumber);
-                Thread.Sleep(2000);
-            }
-            else
-            {
-                Thread.Sleep(200);
-            }
+            return await Task.Delay(2000)
+                .ContinueWith<PaymentReceipt>(
+                task =>
+                {
+                    return new PaymentReceipt()
+                    {
+                        AccountNumber = accountNumber,
+                        PaymentConfirmationReceipt = Guid.NewGuid().ToString()
+                    };
+
+                });          
             
         }
     }
